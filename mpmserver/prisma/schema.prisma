@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                    String         @id @default(cuid())
+  name                  String         @unique
+  email                 String         @unique
+  password              String
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  friends               User[]         @relation("UserFriends")
+  friendOf              User[]         @relation("UserFriends")
+  sessions              Session[]
+  sentFriendInvite      FriendInvite[] @relation("SentInvites")
+  receivedFriendInvite  FriendInvite[] @relation("ReceivedInvites")
+  matchRequestSent      MatchRequest?  @relation("MatchRequestSent")
+  matchRequestsReceived MatchRequest[] @relation("MatchRequestsReceived")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FriendInvite {
+  id        String   @id @default(cuid())
+  fromId    String
+  toId      String
+  from      User     @relation("SentInvites", fields: [fromId], references: [id])
+  to        User     @relation("ReceivedInvites", fields: [toId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MatchRequest {
+  id             String   @id @default(cuid())
+  fromId         String   @unique
+  toId           String
+  from           User     @relation("MatchRequestSent", fields: [fromId], references: [id])
+  to             User     @relation("MatchRequestsReceived", fields: [toId], references: [id])
+  serverIp       String
+  serverPort     Int
+  serverPassword String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
